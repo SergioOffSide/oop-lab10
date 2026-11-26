@@ -2,17 +2,22 @@ package it.unibo.mvc;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringTokenizer;
 
 /**
  * Application entry point for DrawNumber game.
  */
 public final class DrawNumberApp implements DrawNumberViewObserver {
-    private static final int MIN = 0;
-    private static final int MAX = 100;
-    private static final int ATTEMPTS = 10;
+    private static final String FILE_NAME = "config.yml";
+    private static final String DELIMITER = ": ";
 
     private final DrawNumber model;
     private final List<DrawNumberView> views;
@@ -32,7 +37,43 @@ public final class DrawNumberApp implements DrawNumberViewObserver {
             view.setObserver(this);
             view.start();
         }
-        this.model = new DrawNumberImpl(MIN, MAX, ATTEMPTS);
+        int min = 0;
+        int max = 100;
+        int attempts = 10;
+        try (
+            BufferedReader config = new BufferedReader(
+                new InputStreamReader(
+                    Objects.requireNonNull(
+                        ClassLoader.getSystemResourceAsStream(FILE_NAME),
+                        "File not found"
+                    ),
+                    StandardCharsets.UTF_8
+                )
+            )
+        ) {
+            for (String line = config.readLine(); line != null; line = config.readLine()) {
+                final StringTokenizer tokenizer = new StringTokenizer(line, DELIMITER);
+                final String fieldName = tokenizer.nextToken();
+                final int value = Integer.parseInt(tokenizer.nextToken());
+                switch (fieldName) {
+                    case "minimum":
+                        min = value;
+                        break;
+                    case "maximum":
+                        max = value;
+                        break;
+                    case "attempts":
+                        attempts = value;
+                        break;
+                    default: break;
+                }
+            }
+        } catch (final IOException e) {
+            for (final DrawNumberView view : views) {
+                view.displayError(e.getMessage());
+            }
+        }
+        this.model = new DrawNumberImpl(min, max, attempts);
     }
 
     @Override
