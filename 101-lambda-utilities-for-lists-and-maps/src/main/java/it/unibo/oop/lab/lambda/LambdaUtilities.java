@@ -1,7 +1,10 @@
 package it.unibo.oop.lab.lambda;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -13,8 +16,8 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
+/* import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap; */
 
 /**
  * This class will contain four utility functions on lists and maps, of which the first one is provided as example.
@@ -68,7 +71,12 @@ public final class LambdaUtilities {
         /*
          * Suggestion: consider Optional.filter
          */
-        return emptyList();
+        final List<Optional<T>> l = new LinkedList<>();
+        list.forEach(t -> {
+            final Optional<T> elementToFilter = Optional.of(t);
+            l.add(elementToFilter.filter(pre));
+        });
+        return l;
     }
 
     /**
@@ -89,7 +97,16 @@ public final class LambdaUtilities {
         /*
          * Suggestion: consider Map.merge
          */
-        return emptyMap();
+        final Map<R, Set<T>> map = new LinkedHashMap<>();
+        list.forEach(t -> {
+            final Set<T> singleElementSet = new LinkedHashSet<>();
+            singleElementSet.add(t);
+            map.merge(op.apply(t), singleElementSet, (currentSet, asSingleElementSet) -> {
+                currentSet.addAll(asSingleElementSet);
+                return currentSet;
+            });
+        });
+        return map;
     }
 
     /**
@@ -112,7 +129,11 @@ public final class LambdaUtilities {
          *
          * Keep in mind that a map can be iterated through its forEach method
          */
-        return emptyMap();
+        final Map<K, V> m = new LinkedHashMap<>();
+        map.forEach((k, v) -> {
+            m.put(k, v.orElse(def.get()));
+        });
+        return m;
     }
 
     /**
